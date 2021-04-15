@@ -15,48 +15,88 @@ typedef osmium::handler::NodeLocationsForWays<index_pos_type, index_neg_type> lo
 
 class Handler : public location_handler_type
 {
+public:
+    enum class Function
+    {
+        CountNodes, CreateData
+    };
 private:
     index_pos_type index_pos;
     index_neg_type index_neg;
     std::ofstream file_out;
     Data data;
+    std::map<osmium::object_id_type, std::uint32_t> link_counter;
 
 public:
+    Function function;
 
     Handler(const char* file) : index_pos(), index_neg(),
         location_handler_type(index_pos, index_neg), 
-    	file_out(file), data()
+    	file_out(file), data(), link_counter(),
+        function(Function::CountNodes)
     {}
 
     void way(const osmium::Way& way) 
     {
         const osmium::TagList& tags = way.tags();
-        //if (tags.has_tag("highway", "road"))
+
         if(tags.has_key("highway") && !tags.has_tag("highway", "path"))
         {
-            const osmium::NodeRef *prev = &(way.nodes().front());
-
-            for (osmium::WayNodeList::const_iterator it = way.nodes().cbegin() + 1;
-                it != way.nodes().cend(); ++it)
+            if(function == Function::CountNodes)
             {
-                const osmium::NodeRef& node = *it;
+                for(const osmium::NodeRef& node : way.nodes())
+                {
+                    const osmium::object_id_type ref = node.ref();
+                    link_counter[ref]++;
 
-        		const osmium::Location l1 = get_node_location(prev->ref());
-        		const osmium::Location l2 = get_node_location(node.ref());
-
-                //store locations of nodes
-                data.add_location(prev->ref(), {l1.lat(), l1.lon()});
-                data.add_location(node.ref(), {l2.lat(), l2.lon()});
-
-                const double length = osmium::geom::haversine::distance(
-                    osmium::geom::Coordinates(l1), 
-                    osmium::geom::Coordinates(l2));
-
-                //construct an edge
-                data.add_edge(prev->ref(), {node.ref(), length});
-
-                prev = &node;
+                    if (link_counter[ref] == 2u)
+                    {
+                        const osmium::Location loc = get_node_location(ref);
+                        data.add_location(ref, {loc.lat(), loc.lon()});
+                    }
+                }
             }
+
+            else //if(function == Function::CreateData)
+            {
+                double total_length = 0.0;
+                const osmium::NodeRef *first = &(way.nodes().front());
+                const osmium::NodeRef *prev = first;
+
+                for (osmium::WayNodeList::const_iterator it = way.nodes().cbegin() + 1;
+                    it != way.nodes().cend(); ++it)
+                {
+                    const osmium::NodeRef& node = *it;
+
+                    const osmium::Location l1 = get_node_location(prev->ref());
+                    const osmium::Location l2 = get_node_location(node.ref());
+
+                    //store locations of nodes
+                    data.add_location(prev->ref(), {l1.lat(), l1.lon()});
+                    data.add_location(node.ref(), {l2.lat(), l2.lon()});
+
+                    total_length = osmium::geom::haversine::distance(
+                        osmium::geom::Coordinates(l1), 
+                        osmium::geom::Coordinates(l2));
+
+                    if (link_counter[node.ref()] > 1u)
+                    {
+                        //construct an edge
+                        data.add_edge(first->ref(), {node.ref(), total_length});
+                        total_length = 0.0;
+                        first = &node;
+                    }
+                    
+                    prev = &node;
+                }
+
+                if (first != &(way.nodes().back()))
+                {
+                    data.add_edge(first->ref(), {way.nodes().back().ref(), total_length});
+                    total_length = 0.0;
+                }
+            }
+            
         }
     }
 
@@ -78,8 +118,13 @@ int main(int argc, char **argv)
     try 
     {
         Handler hnd(argv[2]);
-        osmium::io::Reader reader(argv[1], osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
-        osmium::apply(reader, hnd);
+        osmium::io::Reader reader1(argv[1], osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
+        osmium::apply(reader1, hnd);
+
+        hnd.function = Handler::Function::CreateData;
+        osmium::io::Reader reader2(argv[1], osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
+        osmium::apply(reader2, hnd);
+
         hnd.output();
         
         return EXIT_SUCCESS;
