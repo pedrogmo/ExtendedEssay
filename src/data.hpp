@@ -78,9 +78,15 @@ public:
 		locations[v] = loc;
 	}
 
-	void add_edge(Vertex from, Edge e)
+	void add_edge(Vertex from, Edge e, bool one_directional)
 	{
 		edges.insert({from, e});
+
+		if (!one_directional)
+		{
+			Edge back = {from, e.cost};
+			edges.insert({e.destination, back});
+		}
 	}
 
 	std::uint32_t vertex_count() const

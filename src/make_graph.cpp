@@ -59,6 +59,7 @@ public:
 
             else //if(function == Function::CreateData)
             {
+                bool oneway = tags.has_tag("oneway", "true");
                 double total_length = 0.0;
                 const osmium::NodeRef *first = &(way.nodes().front());
                 const osmium::NodeRef *prev = first;
@@ -82,7 +83,7 @@ public:
                     if (link_counter[node.ref()] > 1u)
                     {
                         //construct an edge
-                        data.add_edge(first->ref(), {node.ref(), total_length});
+                        data.add_edge(first->ref(), {node.ref(), total_length}, oneway);
                         total_length = 0.0;
                         first = &node;
                     }
@@ -92,7 +93,7 @@ public:
 
                 if (first != &(way.nodes().back()))
                 {
-                    data.add_edge(first->ref(), {way.nodes().back().ref(), total_length});
+                    data.add_edge(first->ref(), {way.nodes().back().ref(), total_length}, oneway);
                     total_length = 0.0;
                 }
             }

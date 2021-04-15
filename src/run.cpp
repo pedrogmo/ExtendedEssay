@@ -24,9 +24,16 @@ int main(int argc, char **argv)
     {
         dijkstra_or_astar = false;
     }
+    else if (std::strncmp(argv[2], "locate", std::strlen(argv[2])) == 0)
+    {
+        Graph::Location l1 = graph.location(v1), l2 = graph.location(v2);
+        std::cout << l1.lat << ", " << l1.lon << std::endl <<
+            l2.lat << ", " << l2.lon << std::endl;
+        return EXIT_SUCCESS;
+    }
     else
     {
-        std::cerr << "Enter either \"dijkstra\" or \"astar\" as 2nd argument.";
+        std::cerr << "Enter either \"dijkstra\" or \"astar\" or \"locate\" as 2nd argument.";
         return EXIT_FAILURE;
     }
 
