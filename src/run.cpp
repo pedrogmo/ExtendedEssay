@@ -50,6 +50,5 @@ int main(int argc, char **argv)
     std::chrono::duration<double> duration = stop - start;
     std::cout << duration.count() << "s";
 
-
 	return EXIT_SUCCESS;
 }

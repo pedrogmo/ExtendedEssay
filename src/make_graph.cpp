@@ -31,7 +31,8 @@ public:
     void way(const osmium::Way& way) 
     {
         const osmium::TagList& tags = way.tags();
-        if (tags.has_tag("highway", "road")) //or something else here
+        //if (tags.has_tag("highway", "road"))
+        if(tags.has_key("highway") && !tags.has_tag("highway", "path"))
         {
             const osmium::NodeRef *prev = &(way.nodes().front());
 

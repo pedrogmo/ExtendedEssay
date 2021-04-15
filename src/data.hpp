@@ -114,6 +114,11 @@ public:
 		return closest_match;
 	}
 
+	Location location(Vertex vertex)
+	{
+		return locations.at(vertex);
+	}
+
 	friend std::ostream& operator<< (std::ostream& out, const Data& data)
 	{
 		for(auto it = data.edges.cbegin(); it != data.edges.cend(); ++it)
