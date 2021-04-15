@@ -1,0 +1,1 @@
+clang++ $1 -o main -std=c++17 -O4 /usr/local/lib/libbz2.a /usr/local/lib/libexpat.a /usr/local/lib/libz.a

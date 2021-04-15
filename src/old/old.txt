@@ -1,0 +1,78 @@
+class Handler : public location_handler_type
+{
+private:
+    std::map<osmium::object_id_type, std::uint32_t> link_counter;
+    index_pos_type index_pos;
+    index_neg_type index_neg;
+
+public:
+    enum class Function
+    {
+        CountNodes,
+        CreateGraph
+    };
+    Function function;
+    Graph graph;
+
+    Handler() : index_pos(), index_neg(),
+        location_handler_type(index_pos, index_neg), 
+    	link_counter(), function(Function::CountNodes),
+        graph()
+    {}
+
+    void way(const osmium::Way& way) 
+    {
+        if (function == Function::CountNodes)
+        {
+            const osmium::TagList& tags = way.tags();
+            if (tags.has_key("highway")) //or something else here
+            {
+                for(const osmium::NodeRef& node : way.nodes())
+                    link_counter[node.ref()]++;
+            }
+        }
+        else if (function == Function::CreateGraph)
+        {
+            const osmium::NodeRef *first = &(way.nodes().front());
+            const osmium::NodeRef *last = first;
+            double total_length = 0.0;
+
+            for (osmium::WayNodeList::const_iterator it = way.nodes().cbegin() + 1;
+                it != way.nodes().cend(); ++it)
+            {
+                const osmium::NodeRef& node = *it;
+
+                osmium::Location l1 = get_node_location(last->ref());
+                osmium::Location l2 = get_node_location(node.ref());
+
+                total_length += osmium::geom::haversine::distance(
+                    osmium::geom::Coordinates(l1), 
+                    osmium::geom::Coordinates(l2));
+
+                last = &node;
+
+                if (link_counter[node.ref()] > 1)
+                {
+                    //construct an edge
+                    graph.add_edge(first->ref(), last->ref(), total_length);
+                    graph.add_location(first->ref(), l1);
+                    graph.add_location(last->ref(), l2);
+
+                    total_length = 0.0;
+                    first = &node;
+                }
+            }
+        }
+    }
+}
+
+int main(int argc, char **argv)
+{
+    //...
+
+    osmium::io::Reader reader2(argv[1], osmium::osm_entity_bits::node | osmium::osm_entity_bits::way);
+    hnd.function = Handler::Function::CreateGraph;
+    osmium::apply(reader2, hnd);
+
+    //...
+}
