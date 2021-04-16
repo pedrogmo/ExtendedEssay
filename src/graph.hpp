@@ -19,11 +19,36 @@ private:
 
 	typedef std::priority_queue<PQElement, std::vector<PQElement>, greater_pqelement> PriorityQueue;
 
+	constexpr static double EARTH_RADIUS_KM = 6372.8;
+
+	inline double degree_to_radian(double angle) const
+	{
+		return M_PI * angle / 180.0;
+	}
+
+	inline double harversine(const Location& l1, const Location& l2) const
+	{
+		const double lat_rad1 = degree_to_radian(l1.lat);
+		const double lat_rad2 = degree_to_radian(l2.lat);
+		const double lon_rad1 = degree_to_radian(l1.lon);
+		const double lon_rad2 = degree_to_radian(l2.lon);
+	 
+		const double diff_lat = lat_rad2 - lat_rad1;
+		const double diff_lon = lon_rad2 - lon_rad1;
+	 
+		const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
+			std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
+
+		return 2 * EARTH_RADIUS_KM * computation;
+	}
+
 	//look at this later: ERROR HERE
+	//maybe use harversine from osmium?
 	inline double heuristic(Vertex v1, Vertex v2) const 
 	{
-		Location a = locations.at(v1), b = locations.at(v2);
-		return std::abs(a.lat - b.lat) + std::abs(a.lon - b.lon);
+		const Location a = locations.at(v1), b = locations.at(v2);
+		return harversine(a, b);
+		//return std::abs(a.lat - b.lat) + std::abs(a.lon - b.lon);
 	}
 
 public:
