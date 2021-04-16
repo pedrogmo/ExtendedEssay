@@ -39,42 +39,41 @@ public:
     void way(const osmium::Way& way) 
     {
         const osmium::TagList& tags = way.tags();
+        const osmium::WayNodeList& nodelist = way.nodes();
 
         if(tags.has_key("highway") && !tags.has_tag("highway", "path"))
         {
             if(function == Function::CountNodes)
             {
-                for(const osmium::NodeRef& node : way.nodes())
+                for(const osmium::NodeRef& node : nodelist)
                 {
                     const osmium::object_id_type ref = node.ref();
                     link_counter[ref]++;
 
-                    if (link_counter[ref] == 2u)
+                    if (link_counter[ref] == 2u) //vertex of the graph
                     {
+                        //then add location to graph
                         const osmium::Location loc = get_node_location(ref);
                         data.add_location(ref, {loc.lat(), loc.lon()});
                     }
                 }
             }
 
+            //first location not added, first not 2u
             else //if(function == Function::CreateData)
             {
-                bool oneway = tags.has_tag("oneway", "true");
-                double total_length = 0.0;
-                const osmium::NodeRef *first = &(way.nodes().front());
+                const bool oneway = tags.has_tag("oneway", "true");
+                const osmium::NodeRef *first = &(nodelist.front());
                 const osmium::NodeRef *prev = first;
+                double total_length = 0.0;
 
-                for (osmium::WayNodeList::const_iterator it = way.nodes().cbegin() + 1;
-                    it != way.nodes().cend(); ++it)
+                for (osmium::WayNodeList::const_iterator it = nodelist.cbegin() + 1;
+                    it != nodelist.cend(); ++it)
                 {
                     const osmium::NodeRef& node = *it;
 
                     const osmium::Location l1 = get_node_location(prev->ref());
                     const osmium::Location l2 = get_node_location(node.ref());
-
-                    //store locations of nodes
-                    data.add_location(prev->ref(), {l1.lat(), l1.lon()});
-                    data.add_location(node.ref(), {l2.lat(), l2.lon()});
 
                     total_length = osmium::geom::haversine::distance(
                         osmium::geom::Coordinates(l1), 
@@ -91,11 +90,11 @@ public:
                     prev = &node;
                 }
 
-                if (first != &(way.nodes().back()))
+                /*if (first != nodelist.cend())
                 {
-                    data.add_edge(first->ref(), {way.nodes().back().ref(), total_length}, oneway);
+                    data.add_edge(first->ref(), {nodelist.back().ref(), total_length}, oneway);
                     total_length = 0.0;
-                }
+                }*/
             }
             
         }

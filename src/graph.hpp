@@ -19,7 +19,8 @@ private:
 
 	typedef std::priority_queue<PQElement, std::vector<PQElement>, greater_pqelement> PriorityQueue;
 
-	inline double heuristic(Vertex v1, Vertex v2) const
+	//look at this later: ERROR HERE
+	inline double heuristic(Vertex v1, Vertex v2) const 
 	{
 		Location a = locations.at(v1), b = locations.at(v2);
 		return std::abs(a.lat - b.lat) + std::abs(a.lon - b.lon);
@@ -50,13 +51,15 @@ public:
 				return true;
 			}
 
-			std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
+			//get edges from current as pair<it, it> (begin, end)
+			const std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
 
 			for (std::map<Vertex, Edge>::const_iterator it = p.first; it != p.second; ++it) 
 			{
 				const Edge& edge = it->second;
 				const Cost new_cost = cost_so_far[current] + edge.cost;
 
+				//if cost does not exist or new_cost is smaller, update cost
 				if (cost_so_far.find(edge.destination) == cost_so_far.end()
 					|| new_cost < cost_so_far[edge.destination]) 
 				{
@@ -91,18 +94,20 @@ public:
 				return true;
 			}
 
-			std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
+			//get edges from current as pair<it, it> (begin, end)
+			const std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
 
 			for (std::map<Vertex, Edge>::const_iterator it = p.first; it != p.second; ++it) 
 			{
 				const Edge& edge = it->second;
 				const Cost new_cost = cost_so_far[current] + edge.cost;
 
+				//if cost does not exist or new_cost is smaller, update cost
 				if (cost_so_far.find(edge.destination) == cost_so_far.end()
 					|| new_cost < cost_so_far[edge.destination]) 
 				{
 					cost_so_far[edge.destination] = new_cost;
-					double priority = new_cost + heuristic(edge.destination, goal);
+					const double priority = new_cost + heuristic(edge.destination, goal);
 					came_from[edge.destination] = current;
 					frontier.push({priority, edge.destination});
 				}

@@ -5,7 +5,7 @@ int main(int argc, char **argv)
 {
 	if (argc != 7)
 	{
-		std::cerr << "6 arguments expected: file_input, dijkstra/astar, lat1, lon1, lat2, lon2.";
+		std::cerr << "6 arguments expected: file_input, dijkstra/astar/locate, lat1, lon1, lat2, lon2.";
         return EXIT_FAILURE;
 	}
 
