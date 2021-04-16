@@ -3,9 +3,9 @@
 
 int main(int argc, char **argv)
 {
-	if (argc != 7)
+	if (argc != 7 && argc != 8)
 	{
-		std::cerr << "6 arguments expected: file_input, dijkstra/astar/locate, lat1, lon1, lat2, lon2.";
+		std::cerr << "6/7 arguments expected: file_input, dijkstra/astar/locate, lat1, lon1, lat2, lon2, (optional : file_output_kml)";
         return EXIT_FAILURE;
 	}
 
@@ -55,7 +55,51 @@ int main(int argc, char **argv)
 
     //found
     std::chrono::duration<double> duration = stop - start;
-    std::cout << duration.count() << "s";
+    std::cout << duration.count() << "s" << std::endl;
+
+    if (argc == 8) //extra argument: output kml
+    {
+        std::vector<Graph::Vertex> vlist = graph.reconstruct_path(v1, v2, came_from);
+
+        std::ofstream kml_out(argv[7]);
+        kml_out << 
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" <<
+        "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" <<
+        "<Document>\n" <<
+          "<name>LineStyle.kml</name>\n" <<
+          "<open>1</open>\n" <<
+          "<Style id=\"linestyleExample\">\n" <<
+            "<LineStyle>\n" <<
+              "<color>" << (dijkstra_or_astar ? "7f0000ff" : "7fff0000") << "</color>\n" <<
+              "<width>4</width>\n" <<
+              "<gx:labelVisibility>1</gx:labelVisibility>\n" <<
+            "</LineStyle>\n" <<
+          "</Style>\n" <<
+          "<Placemark>\n" <<
+            "<name>LineStyle Example</name>\n" <<
+            "<styleUrl>#linestyleExample</styleUrl>\n" <<
+            "<LineString>\n" <<
+              "<extrude>1</extrude>\n" <<
+              "<tessellate>1</tessellate>\n" <<
+              "<coordinates>\n";
+        
+        for(const Graph::Vertex& v : vlist)
+        {
+            const Graph::Location l = graph.location(v);
+            kml_out << l.lon << "," << l.lat << ",0" << std::endl;
+        }
+        const Graph::Location l = graph.location(vlist.front());
+        kml_out << l.lon << "," << l.lat << ",0" << std::endl;
+
+        kml_out << 
+        "</coordinates>\n" <<
+        "</LineString>\n" <<
+          "</Placemark>\n" <<
+        "</Document>\n" <<
+        "</kml>";
+
+        kml_out.close();
+    }
 
 	return EXIT_SUCCESS;
 }

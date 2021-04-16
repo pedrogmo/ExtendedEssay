@@ -161,6 +161,12 @@ public:
 			out.write(reinterpret_cast<const char*>(&e), sizeof(e));
 		}
 	}
+
+	friend std::ostream& operator<<(std::ostream& out, const Location& l)
+	{
+		out << l.lat << ", " << l.lon;
+		return out;
+	}
 };
 
 #endif //DATA_HPP
