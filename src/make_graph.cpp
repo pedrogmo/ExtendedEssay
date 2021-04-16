@@ -63,14 +63,24 @@ public:
             else //if(function == Function::CreateData)
             {
                 const bool oneway = tags.has_tag("oneway", "true");
-                const osmium::NodeRef *first = &(nodelist.front());
-                const osmium::NodeRef *prev = first;
+                const osmium::NodeRef *first = nullptr, *prev = nullptr;
                 double total_length = 0.0;
 
-                for (osmium::WayNodeList::const_iterator it = nodelist.cbegin() + 1;
+                for (osmium::WayNodeList::const_iterator it = nodelist.cbegin();
                     it != nodelist.cend(); ++it)
                 {
                     const osmium::NodeRef& node = *it;
+
+                    if (!first)
+                    {
+                        if (link_counter[node.ref()] > 1u)
+                        {
+                            //then set first to be this node and begin edge
+                            first = &node;
+                            prev = first;
+                        }
+                        continue;
+                    }
 
                     const osmium::Location l1 = get_node_location(prev->ref());
                     const osmium::Location l2 = get_node_location(node.ref());
@@ -89,12 +99,6 @@ public:
                     
                     prev = &node;
                 }
-
-                /*if (first != nodelist.cend())
-                {
-                    data.add_edge(first->ref(), {nodelist.back().ref(), total_length}, oneway);
-                    total_length = 0.0;
-                }*/
             }
             
         }
