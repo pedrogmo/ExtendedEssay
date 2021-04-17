@@ -26,7 +26,7 @@ private:
 		return M_PI * angle / 180.0;
 	}
 
-	inline double harversine(const Location& l1, const Location& l2) const
+	inline Cost harversine(const Location& l1, const Location& l2) const
 	{
 		const double lat_rad1 = degree_to_radian(l1.lat);
 		const double lat_rad2 = degree_to_radian(l2.lat);
@@ -42,13 +42,10 @@ private:
 		return 2 * EARTH_RADIUS_KM * computation;
 	}
 
-	//look at this later: ERROR HERE
-	//maybe use harversine from osmium?
-	inline double heuristic(Vertex v1, Vertex v2) const 
+	inline Cost heuristic(Vertex v1, Vertex v2) const 
 	{
 		const Location a = locations.at(v1), b = locations.at(v2);
 		return harversine(a, b);
-		//return std::abs(a.lat - b.lat) + std::abs(a.lon - b.lon);
 	}
 
 public:
@@ -61,7 +58,7 @@ public:
 		std::map<Vertex, Cost> cost_so_far;
 		PriorityQueue frontier;
 
-		frontier.push({0.0, start});
+		frontier.push(PQElement(0.0, start));
 
 		//came_from[start] = start;
 		cost_so_far[start] = 0.0;
@@ -90,7 +87,7 @@ public:
 				{
 					cost_so_far[edge.destination] = new_cost;
 					came_from[edge.destination] = current;
-					frontier.push({new_cost, edge.destination});
+					frontier.push(PQElement(new_cost, edge.destination));
 				}
 			}
 		}
@@ -104,7 +101,7 @@ public:
 		std::map<Vertex, Cost> cost_so_far;
 		PriorityQueue frontier;
 
-		frontier.push({0.0, start});
+		frontier.push(PQElement(0.0, start));
 
 		//came_from[start] = start;
 		cost_so_far[start] = 0.0;
@@ -132,9 +129,9 @@ public:
 					|| new_cost < cost_so_far[edge.destination]) 
 				{
 					cost_so_far[edge.destination] = new_cost;
-					const double priority = new_cost + heuristic(edge.destination, goal);
+					const Cost priority = new_cost + heuristic(edge.destination, goal);
 					came_from[edge.destination] = current;
-					frontier.push({priority, edge.destination});
+					frontier.push(PQElement(priority, edge.destination));
 				}
 			}
 		}
