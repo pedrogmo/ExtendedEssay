@@ -6,6 +6,8 @@
 
 class Graph : public Data
 {
+public: 
+	double factor;
 private:
 	typedef std::pair<Cost, Vertex> PQElement;
 
@@ -39,7 +41,7 @@ private:
 		const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
 			std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
 
-		return 2 * EARTH_RADIUS_KM * computation;
+		return 2.0 * EARTH_RADIUS_KM * computation * factor;
 	}
 
 	inline Cost heuristic(Vertex v1, Vertex v2) const 
@@ -49,7 +51,7 @@ private:
 	}
 
 public:
-	Graph(const char* file) : Data(file)
+	Graph(const char* file) : Data(file), factor(100.0)
 	{}
 
 	bool dijkstra(Vertex start, Vertex goal,
