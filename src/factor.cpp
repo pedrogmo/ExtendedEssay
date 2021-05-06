@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     do
     {
-    	graph.factor -= 1.0;
+    	graph.factor += 1.0;
     	std::cout << graph.factor << std::endl;
 
 	    bool found = graph.astar(v1, v2, came_from);

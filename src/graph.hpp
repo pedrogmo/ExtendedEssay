@@ -39,7 +39,7 @@ private:
 		const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
 			std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
 
-		return 2.0 * EARTH_RADIUS_KM * computation * 30.0;
+		return 2.0 * EARTH_RADIUS_KM * computation / 2.0;
 	}
 
 	inline Cost heuristic(Vertex v1, Vertex v2) const 

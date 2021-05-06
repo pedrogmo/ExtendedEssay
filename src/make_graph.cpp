@@ -43,7 +43,9 @@ public:
         const osmium::TagList& tags = way.tags();
         const osmium::WayNodeList& nodelist = way.nodes();
 
-        if(tags.has_key("highway") && !tags.has_tag("highway", "path"))
+        if(tags.has_key("highway") && 
+            !tags.has_tag("highway", "path") && 
+            !tags.has_tag("highway", "pedestrian"))
         {
             if(function == Function::CountNodes)
             {
@@ -67,7 +69,52 @@ public:
                 const bool oneway = tags.has_tag("oneway", "true");
                 const osmium::NodeRef *first = nullptr, *prev = nullptr;
                 double total_length = 0.0;
-                //here could also get maxspeed
+                
+                const char *speed_str = tags.get_value_by_key("maxspeed");
+                double speed = 30.0; //default speed in km/h
+                if (!speed_str) //not provided (majority)
+                {
+                    if (tags.has_tag("highway", "motorway"))
+                        speed = 150.0;
+                    else if (tags.has_tag("highway", "trunk"))
+                        speed = 130.0;
+                    else if (tags.has_tag("highway", "primary"))
+                        speed = 100.0;
+                    else if (tags.has_tag("highway", "secondary"))
+                        speed = 80.0;
+                    else if (tags.has_tag("highway", "tertiary"))
+                        speed = 60.0;
+                    else if (tags.has_tag("highway", "unclassified"))
+                        speed = 50.0;
+                    else if (tags.has_tag("highway", "residential"))
+                        speed = 30.0;
+                    else if (tags.has_tag("highway", "motorway_link"))
+                        speed = 100.0;
+                    else if (tags.has_tag("highway", "trunk_link"))
+                        speed = 80.0;
+                    else if (tags.has_tag("highway", "primary_link"))
+                        speed = 60.0;
+                    else if (tags.has_tag("highway", "secondary_link"))
+                        speed = 50.0;
+                    else if (tags.has_tag("highway", "tertiary_link"))
+                        speed = 40.0;
+                    else if (tags.has_tag("highway", "living_street"))
+                        speed = 10.0;
+                    else if(tags.has_tag("highway", "service"))
+                        speed = 30.0;
+                    else if (tags.has_tag("highway", "track"))
+                        speed = 40.0;
+                }
+                else if (const char *ptr = std::strstr(speed_str, "mph"))
+                    speed = std::atof(speed_str) * 1.60934;
+                else if (const char *ptr = std::strstr(speed_str, "knots"))
+                    speed = std::atof(speed_str) * 1.852;
+                else if (std::strncmp(speed_str, "none", std::strlen(speed_str)) == 0)
+                    speed = 180.0;
+                else if (std::strncmp(speed_str, "walk", std::strlen(speed_str)) == 0)
+                    speed = 5.0;
+                else //speed in km/h
+                    speed = std::atof(speed_str);
 
                 for (osmium::WayNodeList::const_iterator it = nodelist.cbegin();
                     it != nodelist.cend(); ++it)
@@ -95,7 +142,7 @@ public:
                     if (link_counter[node.ref()] > 1u)
                     {
                         //construct an edge
-                        data.add_edge(first->ref(), {node.ref(), total_length}, oneway);
+                        data.add_edge(first->ref(), {node.ref(), total_length / speed}, oneway);
                         total_length = 0.0;
                         first = &node;
                     }
@@ -142,36 +189,3 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 }
-
-/*
-    const char *speed_str = tags.get_value_by_key("maxspeed");
-    double speed = 0.0; //default speed in km/h
-
-    if (!speed_str)
-    {}
-    else if (const char *ptr = std::strstr(speed_str, "mph"))
-    {
-        speed = std::atof(speed_str) * 1.60934;
-    }
-    else if (const char *ptr = std::strstr(speed_str, "knots"))
-    {
-        speed = std::atof(speed_str) * 1.852;
-    }
-    else if (std::strncmp(speed_str, "none", std::strlen(speed_str)) == 0)
-    {
-        //no limit, 130 by default
-        speed = 130.0;
-    }
-    else if (std::strncmp(speed_str, "walk", std::strlen(speed_str)) == 0)
-    {
-        //walking speed
-        speed = 5.0;
-    }
-    else //speed in km/h
-    {
-        speed = std::atof(speed_str);
-    }
-    
-    if (speed_str)
-        std::cout << speed_str << std::endl;
-*/
