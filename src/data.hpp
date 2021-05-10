@@ -39,7 +39,7 @@ public:
 
 	Data(const char* file)
 	{
-		std::ifstream in(file);
+		std::ifstream in(file, std::ios::binary);
 
 		std::size_t n_vertices;
 		in.read(reinterpret_cast<char*>(&n_vertices), sizeof(n_vertices));

@@ -32,9 +32,11 @@ private:
 public:
     Function function;
 
-    Handler(const char* file) : index_pos(), index_neg(),
+    Handler(const char* file) : 
+        index_pos(), index_neg(),
         location_handler_type(index_pos, index_neg), 
-    	file_out(file), data(), link_counter(),
+    	file_out(file, std::ios::binary), data(), 
+        link_counter(),
         function(Function::CountNodes)
     {}
 
