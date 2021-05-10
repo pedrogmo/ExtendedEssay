@@ -60,7 +60,7 @@ public:
                     {
                         //then add location to graph
                         const osmium::Location loc = get_node_location(ref);
-                        data.add_location(ref, {loc.lat(), loc.lon()});
+                        data.add_vertex(ref, {loc.lat(), loc.lon()});
                     }
                 }
             }
@@ -144,7 +144,7 @@ public:
                     if (link_counter[node.ref()] > 1u)
                     {
                         //construct an edge
-                        data.add_edge(first->ref(), {node.ref(), total_length / speed}, oneway);
+                        data.add_edge(first->ref(), node.ref(), total_length / speed, oneway);
                         total_length = 0.0;
                         first = &node;
                     }

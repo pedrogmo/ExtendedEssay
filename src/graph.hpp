@@ -7,7 +7,7 @@
 class Graph : public Data
 {
 private:
-	typedef std::pair<Cost, Vertex> PQElement;
+	typedef std::pair<cost_t, Vertex*> PQElement;
 
 	struct greater_pqelement
 	{
@@ -26,8 +26,11 @@ private:
 		return M_PI * angle / 180.0;
 	}
 
-	inline Cost harversine(const Location& l1, const Location& l2) const
+	inline cost_t heuristic(const Vertex& v1, const Vertex& v2) const 
 	{
+		const Location& l1 = v1.loc;
+		const Location& l2 = v2.loc;
+
 		const double lat_rad1 = degree_to_radian(l1.lat);
 		const double lat_rad2 = degree_to_radian(l2.lat);
 		const double lon_rad1 = degree_to_radian(l1.lon);
@@ -42,51 +45,41 @@ private:
 		return 2.0 * EARTH_RADIUS_KM * computation / 2.0;
 	}
 
-	inline Cost heuristic(Vertex v1, Vertex v2) const 
-	{
-		const Location a = locations.at(v1), b = locations.at(v2);
-		return harversine(a, b);
-	}
-
 public:
 	Graph(const char* file) : Data(file)
 	{}
 
-	bool dijkstra(Vertex start, Vertex goal,
-		std::map<Vertex, Vertex>& came_from)
+	bool dijkstra(id_t start_id, id_t goal_id,
+		std::map<id_t, id_t>& came_from)
 	{
-		std::map<Vertex, Cost> cost_so_far;
+		std::map<id_t, cost_t> cost_so_far;
 		PriorityQueue frontier;
 
-		frontier.push(PQElement(0.0, start));
+		frontier.push(PQElement(0.0, &vertices.at(start_id)));
 
-		//came_from[start] = start;
-		cost_so_far[start] = 0.0;
+		//came_from[start_id] = start_id;
+		cost_so_far[start_id] = 0.0;
 
 		while (!frontier.empty()) 
 		{
-			Vertex current = frontier.top().second;
+			const Vertex *current = frontier.top().second;
 			frontier.pop();
 
-			if (current == goal) 
+			if (current->id == goal_id) 
 			{
 				return true;
 			}
 
-			//get edges from current as pair<it, it> (begin, end)
-			const std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
-
-			for (std::map<Vertex, Edge>::const_iterator it = p.first; it != p.second; ++it) 
+			for(const Edge& edge : current->edges)
 			{
-				const Edge& edge = it->second;
-				const Cost new_cost = cost_so_far[current] + edge.cost;
+				const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
 				//if cost does not exist or new_cost is smaller, update cost
-				if (cost_so_far.find(edge.destination) == cost_so_far.end()
-					|| new_cost < cost_so_far[edge.destination]) 
+				if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
+					new_cost < cost_so_far[edge.destination->id]) 
 				{
-					cost_so_far[edge.destination] = new_cost;
-					came_from[edge.destination] = current;
+					cost_so_far[edge.destination->id] = new_cost;
+					came_from[edge.destination->id] = current->id;
 					frontier.push(PQElement(new_cost, edge.destination));
 				}
 			}
@@ -95,42 +88,39 @@ public:
 		return false;
 	}
 
-	bool astar(Vertex start, Vertex goal,
-		std::map<Vertex, Vertex>& came_from)
+	bool astar(id_t start_id, id_t goal_id,
+		std::map<id_t, id_t>& came_from)
 	{
-		std::map<Vertex, Cost> cost_so_far;
+		std::map<id_t, cost_t> cost_so_far;
 		PriorityQueue frontier;
+		const Vertex &goal = vertices.at(goal_id);
 
-		frontier.push(PQElement(0.0, start));
+		frontier.push(PQElement(0.0, &vertices.at(start_id)));
 
-		//came_from[start] = start;
-		cost_so_far[start] = 0.0;
+		//came_from[start_id] = start_id;
+		cost_so_far[start_id] = 0.0;
 
 		while (!frontier.empty()) 
 		{
-			Vertex current = frontier.top().second;
+			const Vertex *current = frontier.top().second;
 			frontier.pop();
 
-			if (current == goal) 
+			if (current->id == goal_id) 
 			{
 				return true;
 			}
 
-			//get edges from current as pair<it, it> (begin, end)
-			const std::pair< std::map<Vertex, Edge>::const_iterator, std::map<Vertex, Edge>::const_iterator > p = edges.equal_range(current);
-
-			for (std::map<Vertex, Edge>::const_iterator it = p.first; it != p.second; ++it) 
+			for(const Edge& edge : current->edges)
 			{
-				const Edge& edge = it->second;
-				const Cost new_cost = cost_so_far[current] + edge.cost;
+				const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
 				//if cost does not exist or new_cost is smaller, update cost
-				if (cost_so_far.find(edge.destination) == cost_so_far.end()
-					|| new_cost < cost_so_far[edge.destination]) 
+				if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
+					new_cost < cost_so_far[edge.destination->id]) 
 				{
-					cost_so_far[edge.destination] = new_cost;
-					const Cost priority = new_cost + heuristic(edge.destination, goal);
-					came_from[edge.destination] = current;
+					cost_so_far[edge.destination->id] = new_cost;
+					const cost_t priority = new_cost + heuristic(*edge.destination, goal);
+					came_from[edge.destination->id] = current->id;
 					frontier.push(PQElement(priority, edge.destination));
 				}
 			}
@@ -139,17 +129,17 @@ public:
 		return false;
 	}
 
-	std::vector<Vertex> reconstruct_path(Vertex start, Vertex goal,
-		std::map<Vertex, Vertex>& came_from) const
+	std::vector<id_t> reconstruct_path(id_t start_id, id_t goal_id,
+		std::map<id_t, id_t>& came_from) const
 	{
-		std::vector<Vertex> c;
+		std::vector<id_t> c;
 		
-		for(Vertex v = goal; v != start; v = came_from[v])
+		for(id_t v = goal_id; v != start_id; v = came_from[v])
 		{
 			c.push_back(v);
 		}
 
-		c.push_back(start);
+		c.push_back(start_id);
 		std::reverse(c.begin(), c.end());
 		
 		return c;

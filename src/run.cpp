@@ -10,9 +10,9 @@ int main(int argc, char **argv)
 	}
 
 	Graph graph(argv[1]);
-	Graph::Vertex v1 = graph.from_location({std::atof(argv[3]), std::atof(argv[4])});
-    Graph::Vertex v2 = graph.from_location({std::atof(argv[5]), std::atof(argv[6])});
-    std::map<Graph::Vertex, Graph::Vertex> came_from;
+	Graph::id_t v1 = graph.from_location({std::atof(argv[3]), std::atof(argv[4])});
+    Graph::id_t v2 = graph.from_location({std::atof(argv[5]), std::atof(argv[6])});
+    std::map<Graph::id_t, Graph::id_t> came_from;
 
     bool dijkstra_or_astar = true;
 
@@ -47,11 +47,15 @@ int main(int argc, char **argv)
 
     std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
 
+    std::cout << graph.vertex_count() << "\n" << graph.edge_count();
+
     if (!found)
     {
         std::cerr << "The path was not found.";
         return EXIT_FAILURE;
     }
+
+
 
     //found
     std::chrono::duration<double> duration = stop - start;
@@ -59,7 +63,7 @@ int main(int argc, char **argv)
 
     if (argc == 8) //extra argument: output kml
     {
-        std::vector<Graph::Vertex> vlist = graph.reconstruct_path(v1, v2, came_from);
+        std::vector<Graph::id_t> vlist = graph.reconstruct_path(v1, v2, came_from);
 
         std::ofstream kml_out(argv[7]);
         kml_out << 
@@ -83,7 +87,7 @@ int main(int argc, char **argv)
               "<tessellate>1</tessellate>\n" <<
               "<coordinates>\n";
         
-        for(const Graph::Vertex& v : vlist)
+        for(const Graph::id_t& v : vlist)
         {
             const Graph::Location l = graph.location(v);
             kml_out << l.lon << "," << l.lat << ",0" << std::endl;

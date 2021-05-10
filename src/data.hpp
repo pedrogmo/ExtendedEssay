@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cmath>
 #include <map>
-#include <unordered_map>
+#include <list>
 #include <limits>
 #include <iostream>
 #include <fstream>
@@ -12,107 +12,131 @@
 class Data
 {
 public:
-	typedef std::int64_t Vertex;
-	typedef double Cost;
+	typedef double cost_t;
+	typedef std::int64_t id_t;
 
 	struct Location
 	{
 		double lat;
 		double lon;
 	};
-	struct Edge
-	{
-		Vertex destination;
-		Cost cost;
-	};
 
 protected:
+	struct Vertex
+	{
+		struct Edge
+		{
+			Vertex *destination;
+			cost_t cost;
+		};
 
-	//unordered_map: O(1) access, but consumes more memory
-	std::unordered_map<Vertex, Location> locations;
-	std::multimap<Vertex, Edge> edges;
+		id_t id;
+		Location loc;
+		std::list<Edge> edges;
+	};
+
+	struct Connection
+	{
+		id_t id;
+		cost_t cost;
+	};
+
+	typedef Vertex::Edge Edge;
+
+	std::size_t n_vertices;
+	std::size_t n_edges;
+	std::map<id_t, Vertex> vertices;
 
 public:
 	Data()
-	: locations(), edges()
+	: vertices()
 	{}
 
 	Data(const char* file)
 	{
 		std::ifstream in(file, std::ios::binary);
 
-		std::size_t n_vertices;
 		in.read(reinterpret_cast<char*>(&n_vertices), sizeof(n_vertices));
 
-		for(; n_vertices > 0; --n_vertices)
+		std::map<id_t, Connection> connections;
+
+		for(std::size_t n = 0u; n < n_vertices; ++n)
 		{
-			Vertex v;
-			Location l;
+			Vertex vertex;
+			
+			in.read(reinterpret_cast<char*>(&vertex.id), sizeof(vertex.id));
+			in.read(reinterpret_cast<char*>(&vertex.loc), sizeof(vertex.loc));
 
-			in.read(reinterpret_cast<char*>(&v), sizeof(v));
-			in.read(reinterpret_cast<char*>(&l), sizeof(l));
+			std::size_t n_connections = 0u;
+			in.read(reinterpret_cast<char*>(&n_connections), sizeof(n_connections));
 
-			locations[v] = l;
+			for(; n_connections > 0; --n_connections)
+			{
+				Connection conn;
+				in.read(reinterpret_cast<char*>(&conn), sizeof(conn));
+				connections.insert({vertex.id, conn});
+			}
+
+			vertices.insert({vertex.id, vertex});
 		}
 
-		std::size_t n_edges;
-		in.read(reinterpret_cast<char*>(&n_edges), sizeof(n_edges));
-
-		for(; n_edges > 0; --n_edges)
+		//now traverse connections to set pointers to vertices
+		for(auto it = connections.cbegin(); it != connections.cend(); ++it)
 		{
-			Vertex from;
-			Edge e;
-
-			in.read(reinterpret_cast<char*>(&from), sizeof(from));
-			in.read(reinterpret_cast<char*>(&e), sizeof(e));
-
-			edges.insert({from, e});
+			Edge e = {&vertices.at(it->second.id), it->second.cost};
+			vertices.at(it->first).edges.push_back(e);
+			n_edges++;
 		}
-
-		in.close();
 	}
 
-	void add_location(Vertex v, Location loc)
+	void add_vertex(id_t vertex_id, Location location)
 	{
-		locations[v] = loc;
+		Vertex v;
+		v.id = vertex_id;
+		v.loc = location;
+
+		vertices[vertex_id] = v;
+		n_vertices++;
 	}
 
-	void add_edge(Vertex from, Edge e, bool one_directional) 
+	void add_edge(id_t from_id, id_t to_id, cost_t cost, bool one_directional) 
 	{
-		edges.insert({from, e});
+		Edge e = {&vertices.at(to_id), cost};
+		vertices.at(from_id).edges.push_back(e);
+		n_edges++;
 
 		if (!one_directional)
 		{
-			//reverse: e.destination -> from
-			Edge back = {from, e.cost};
-			edges.insert({e.destination, back});
+			//reverse: to_id -> from_id
+			Edge back = {&vertices.at(from_id), cost};
+			vertices.at(to_id).edges.push_back(back);
+			n_edges++;
 		}
 	}
 
 	std::size_t vertex_count() const noexcept
 	{
-		return locations.size();
+		return n_vertices;
 	}
 
 	std::size_t edge_count() const noexcept
 	{
-		return edges.size();
+		return n_edges;
 	}
 
-	Vertex from_location(Location target)
+	id_t from_location(Location target)
 	{
-		Vertex closest_match;
+		id_t closest_match;
 		double minimum_difference = std::numeric_limits<double>::max();
 
-		for(auto it = locations.cbegin(); it != locations.cend(); ++it)
+		for(auto it = vertices.cbegin(); it != vertices.cend(); ++it)
 		{
-			Vertex n = it->first;
-			Location l = it->second;
+			const Location l = it->second.loc;
 			const double diff = std::abs(target.lat - l.lat) + std::abs(target.lon - l.lon);
 
 			if (diff < minimum_difference)
 			{
-				closest_match = n;
+				closest_match = it->first;
 				minimum_difference = diff;
 			}
 		}
@@ -120,46 +144,9 @@ public:
 		return closest_match;
 	}
 
-	Location location(Vertex vertex)
+	Location location(id_t vertex_id)
 	{
-		return locations.at(vertex);
-	}
-
-	friend std::ostream& operator<< (std::ostream& out, const Data& data)
-	{
-		for(auto it = data.edges.cbegin(); it != data.edges.cend(); ++it)
-		{
-			out << it->first << " -> " << it->second.destination << ": " << it->second.cost << std::endl;
-		}
-
-		return out;
-	}
-
-	void output_binary(std::ofstream& out)
-	{
-		const std::size_t n_vertices = vertex_count();
-		out.write(reinterpret_cast<const char*>(&n_vertices), sizeof(n_vertices));
-
-		for(auto it = locations.cbegin(); it != locations.cend(); ++it)
-		{
-			Vertex n = it->first;
-			Location l = it->second;
-
-			out.write(reinterpret_cast<const char*>(&n), sizeof(n));
-			out.write(reinterpret_cast<const char*>(&l), sizeof(l));
-		}
-
-		const std::size_t n_edges = edge_count();
-		out.write(reinterpret_cast<const char*>(&n_edges), sizeof(n_edges));
-
-		for(auto it = edges.cbegin(); it != edges.cend(); ++it)
-		{
-			Vertex from = it->first;
-			Edge e = it->second;
-
-			out.write(reinterpret_cast<const char*>(&from), sizeof(from));
-			out.write(reinterpret_cast<const char*>(&e), sizeof(e));
-		}
+		return vertices.at(vertex_id).loc;
 	}
 
 	friend std::ostream& operator<<(std::ostream& out, const Location& l)
@@ -167,6 +154,44 @@ public:
 		out << l.lat << ", " << l.lon;
 		return out;
 	}
+
+	friend std::ostream& operator<< (std::ostream& out, const Data& data)
+	{
+		for(auto it = data.vertices.cbegin(); it != data.vertices.cend(); ++it)
+		{
+			out << it->first << ": " << it->second.loc << std::endl << "{";
+			for(const Edge& e : it->second.edges)
+			{
+				out << "(" << e.destination->id << ", " << e.cost << "), ";
+			}
+			out << "}" << std::endl;
+		}
+
+		return out;
+	}
+
+	void output_binary(std::ofstream& out)
+	{
+		out.write(reinterpret_cast<const char*>(&n_vertices), sizeof(n_vertices));
+		std::map<id_t, Connection> connections;
+
+		for(auto it = vertices.cbegin(); it != vertices.cend(); ++it)
+		{
+			const Vertex& vertex = it->second;
+			const std::size_t n_connections = vertex.edges.size();
+
+			out.write(reinterpret_cast<const char*>(&vertex.id), sizeof(vertex.id));
+			out.write(reinterpret_cast<const char*>(&vertex.loc), sizeof(vertex.loc));
+
+			out.write(reinterpret_cast<const char*>(&n_connections), sizeof(n_connections));
+
+			for(const Edge& e : vertex.edges)
+			{
+				Connection conn = {e.destination->id, e.cost};
+				out.write(reinterpret_cast<const char*>(&conn), sizeof(conn));
+			}
+		}
+	}	
 };
 
 #endif //DATA_HPP
