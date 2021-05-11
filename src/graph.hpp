@@ -3,6 +3,7 @@
 
 #include <queue>
 #include "data.hpp"
+#define LOG(X) std::cout << (X) << std::endl
 
 class Graph : public Data
 {
@@ -63,6 +64,7 @@ public:
 		while (!frontier.empty()) 
 		{
 			const Vertex *current = frontier.top().second;
+
 			frontier.pop();
 
 			if (current->id == goal_id) 
@@ -84,6 +86,8 @@ public:
 				}
 			}
 		}
+
+		LOG("Z");
 
 		return false;
 	}

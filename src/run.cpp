@@ -47,15 +47,11 @@ int main(int argc, char **argv)
 
     std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
 
-    std::cout << graph.vertex_count() << "\n" << graph.edge_count();
-
     if (!found)
     {
         std::cerr << "The path was not found.";
         return EXIT_FAILURE;
     }
-
-
 
     //found
     std::chrono::duration<double> duration = stop - start;

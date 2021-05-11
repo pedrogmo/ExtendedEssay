@@ -58,7 +58,7 @@ public:
 
 		in.read(reinterpret_cast<char*>(&n_vertices), sizeof(n_vertices));
 
-		std::map<id_t, Connection> connections;
+		std::multimap<id_t, Connection> connections;
 
 		for(std::size_t n = 0u; n < n_vertices; ++n)
 		{
