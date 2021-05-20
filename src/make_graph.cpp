@@ -77,11 +77,11 @@ public:
                 if (!speed_str) //not provided (majority)
                 {
                     if (tags.has_tag("highway", "motorway"))
-                        speed = 150.0;
+                        speed = 180.0;
                     else if (tags.has_tag("highway", "trunk"))
-                        speed = 130.0;
-                    else if (tags.has_tag("highway", "primary"))
                         speed = 100.0;
+                    else if (tags.has_tag("highway", "primary"))
+                        speed = 90.0;
                     else if (tags.has_tag("highway", "secondary"))
                         speed = 80.0;
                     else if (tags.has_tag("highway", "tertiary"))
