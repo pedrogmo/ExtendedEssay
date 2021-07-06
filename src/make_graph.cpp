@@ -8,7 +8,7 @@
 
 #include <cstring>
 
-#include "data.hpp"
+#include "graph.hpp"
 
 typedef osmium::index::map::Dummy<osmium::unsigned_object_id_type, osmium::Location> index_neg_type;
 typedef osmium::index::map::SparseMemMap<osmium::unsigned_object_id_type, osmium::Location> index_pos_type;
@@ -26,7 +26,7 @@ private:
     index_pos_type index_pos;
     index_neg_type index_neg;
     std::ofstream file_out;
-    Data data;
+    Graph graph;
     std::map<osmium::object_id_type, std::uint32_t> link_counter;
 
 public:
@@ -35,7 +35,7 @@ public:
     Handler(const char* file) : 
         index_pos(), index_neg(),
         location_handler_type(index_pos, index_neg), 
-    	file_out(file, std::ios::binary), data(), 
+    	file_out(file, std::ios::binary), graph(), 
         link_counter(),
         function(Function::CountNodes)
     {}
@@ -60,7 +60,7 @@ public:
                     {
                         //then add location to graph
                         const osmium::Location loc = get_node_location(ref);
-                        data.add_vertex(ref, {loc.lat(), loc.lon()});
+                        graph.add_vertex(ref, {loc.lat(), loc.lon()});
                     }
                 }
             }
@@ -77,35 +77,35 @@ public:
                 if (!speed_str) //not provided (majority)
                 {
                     if (tags.has_tag("highway", "motorway"))
-                        speed = 180.0;
+                        speed = 120.0;
+                    else if (tags.has_tag("highway", "motorway_link"))
+                        speed = 120.0;
                     else if (tags.has_tag("highway", "trunk"))
+                        speed = 100.0;
+                    else if (tags.has_tag("highway", "trunk_link"))
                         speed = 100.0;
                     else if (tags.has_tag("highway", "primary"))
                         speed = 90.0;
+                    else if (tags.has_tag("highway", "primary_link"))
+                        speed = 90.0;
                     else if (tags.has_tag("highway", "secondary"))
-                        speed = 80.0;
+                        speed = 70.0;
+                    else if (tags.has_tag("highway", "secondary_link"))
+                        speed = 70.0;
                     else if (tags.has_tag("highway", "tertiary"))
+                        speed = 60.0;
+                    else if (tags.has_tag("highway", "tertiary_link"))
                         speed = 60.0;
                     else if (tags.has_tag("highway", "unclassified"))
                         speed = 50.0;
                     else if (tags.has_tag("highway", "residential"))
                         speed = 30.0;
-                    else if (tags.has_tag("highway", "motorway_link"))
-                        speed = 100.0;
-                    else if (tags.has_tag("highway", "trunk_link"))
-                        speed = 80.0;
-                    else if (tags.has_tag("highway", "primary_link"))
-                        speed = 60.0;
-                    else if (tags.has_tag("highway", "secondary_link"))
-                        speed = 50.0;
-                    else if (tags.has_tag("highway", "tertiary_link"))
-                        speed = 40.0;
                     else if (tags.has_tag("highway", "living_street"))
                         speed = 10.0;
                     else if(tags.has_tag("highway", "service"))
                         speed = 30.0;
                     else if (tags.has_tag("highway", "track"))
-                        speed = 40.0;
+                        speed = 30.0;
                 }
                 else if (const char *ptr = std::strstr(speed_str, "mph"))
                     speed = std::atof(speed_str) * 1.60934;
@@ -123,7 +123,7 @@ public:
                 {
                     const osmium::NodeRef& node = *it;
 
-                    if (!first)
+                    if (!first) //if first is null, check if node should be first
                     {
                         if (link_counter[node.ref()] > 1u)
                         {
@@ -134,17 +134,19 @@ public:
                         continue;
                     }
 
+                    //if first is not null, add distance from prev
+
                     const osmium::Location l1 = get_node_location(prev->ref());
                     const osmium::Location l2 = get_node_location(node.ref());
 
-                    total_length = osmium::geom::haversine::distance(
+                    total_length += osmium::geom::haversine::distance(
                         osmium::geom::Coordinates(l1), 
                         osmium::geom::Coordinates(l2));
 
                     if (link_counter[node.ref()] > 1u)
                     {
                         //construct an edge
-                        data.add_edge(first->ref(), node.ref(), total_length / speed, oneway);
+                        graph.add_edge(first->ref(), node.ref(), total_length / speed, oneway);
                         total_length = 0.0;
                         first = &node;
                     }
@@ -158,7 +160,7 @@ public:
 
     void output()
     {
-        data.output_binary(file_out);
+        graph.output_binary(file_out);
     }
 
 }; 

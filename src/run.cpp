@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 	}
 
 	Graph graph(argv[1]);
+    graph.factor = 14.0;
 	Graph::id_t v1 = graph.from_location({std::atof(argv[3]), std::atof(argv[4])});
     Graph::id_t v2 = graph.from_location({std::atof(argv[5]), std::atof(argv[6])});
     std::map<Graph::id_t, Graph::id_t> came_from;

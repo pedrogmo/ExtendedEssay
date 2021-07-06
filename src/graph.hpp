@@ -2,152 +2,85 @@
 #define GRAPH_HPP
 
 #include <queue>
-#include "data.hpp"
-#define LOG(X) std::cout << (X) << std::endl
+#include <cstdint>
+#include <cmath>
+#include <map>
+#include <list>
+#include <limits>
+#include <iostream>
+#include <fstream>
 
-class Graph : public Data
+class Graph
 {
+public:
+	typedef double cost_t;
+	typedef std::int64_t id_t;
+
+	struct Location
+	{
+		double lat;
+		double lon;
+	};
+
+	double factor = 0.5;
+
 private:
-	typedef std::pair<cost_t, Vertex*> PQElement;
+	struct Vertex
+	{
+		struct Edge
+		{
+			Vertex *destination;
+			cost_t cost;
+		};
+
+		id_t id;
+		Location loc;
+		std::list<Edge> edges;
+	};
+
+	struct Connection
+	{
+		id_t id;
+		cost_t cost;
+	};
+
+	typedef Vertex::Edge Edge;
+	typedef std::pair<cost_t, const Vertex*> PQElement;
 
 	struct greater_pqelement
 	{
-		bool operator() (const PQElement& x, const PQElement& y) const 
-		{
-			return x.first > y.first; 
-		}
+		bool operator() (const PQElement&, const PQElement&) const;
 	};
 
 	typedef std::priority_queue<PQElement, std::vector<PQElement>, greater_pqelement> PriorityQueue;
 
+	//constants
 	constexpr static double EARTH_RADIUS_KM = 6372.8;
 
-	inline double degree_to_radian(double angle) const
-	{
-		return M_PI * angle / 180.0;
-	}
+	//attributes
+	std::size_t n_vertices;
+	std::size_t n_edges;
+	std::map<id_t, Vertex> vertices;
 
-	inline cost_t heuristic(const Vertex& v1, const Vertex& v2) const 
-	{
-		const Location& l1 = v1.loc;
-		const Location& l2 = v2.loc;
-
-		const double lat_rad1 = degree_to_radian(l1.lat);
-		const double lat_rad2 = degree_to_radian(l2.lat);
-		const double lon_rad1 = degree_to_radian(l1.lon);
-		const double lon_rad2 = degree_to_radian(l2.lon);
-	 
-		const double diff_lat = lat_rad2 - lat_rad1;
-		const double diff_lon = lon_rad2 - lon_rad1;
-	 
-		const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
-			std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
-
-		return 2.0 * EARTH_RADIUS_KM * computation / 2.0;
-	}
+	//private methods
+	double degree_to_radian(double) const;
+	cost_t heuristic(const Vertex&, const Vertex&) const;
 
 public:
-	Graph(const char* file) : Data(file)
-	{}
-
-	bool dijkstra(id_t start_id, id_t goal_id,
-		std::map<id_t, id_t>& came_from)
-	{
-		std::map<id_t, cost_t> cost_so_far;
-		PriorityQueue frontier;
-
-		frontier.push(PQElement(0.0, &vertices.at(start_id)));
-
-		//came_from[start_id] = start_id;
-		cost_so_far[start_id] = 0.0;
-
-		while (!frontier.empty()) 
-		{
-			const Vertex *current = frontier.top().second;
-
-			frontier.pop();
-
-			if (current->id == goal_id) 
-			{
-				return true;
-			}
-
-			for(const Edge& edge : current->edges)
-			{
-				const cost_t new_cost = cost_so_far[current->id] + edge.cost;
-
-				//if cost does not exist or new_cost is smaller, update cost
-				if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
-					new_cost < cost_so_far[edge.destination->id]) 
-				{
-					cost_so_far[edge.destination->id] = new_cost;
-					came_from[edge.destination->id] = current->id;
-					frontier.push(PQElement(new_cost, edge.destination));
-				}
-			}
-		}
-
-		LOG("Z");
-
-		return false;
-	}
-
-	bool astar(id_t start_id, id_t goal_id,
-		std::map<id_t, id_t>& came_from)
-	{
-		std::map<id_t, cost_t> cost_so_far;
-		PriorityQueue frontier;
-		const Vertex &goal = vertices.at(goal_id);
-
-		frontier.push(PQElement(0.0, &vertices.at(start_id)));
-
-		//came_from[start_id] = start_id;
-		cost_so_far[start_id] = 0.0;
-
-		while (!frontier.empty()) 
-		{
-			const Vertex *current = frontier.top().second;
-			frontier.pop();
-
-			if (current->id == goal_id) 
-			{
-				return true;
-			}
-
-			for(const Edge& edge : current->edges)
-			{
-				const cost_t new_cost = cost_so_far[current->id] + edge.cost;
-
-				//if cost does not exist or new_cost is smaller, update cost
-				if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
-					new_cost < cost_so_far[edge.destination->id]) 
-				{
-					cost_so_far[edge.destination->id] = new_cost;
-					const cost_t priority = new_cost + heuristic(*edge.destination, goal);
-					came_from[edge.destination->id] = current->id;
-					frontier.push(PQElement(priority, edge.destination));
-				}
-			}
-		}
-
-		return false;
-	}
-
-	std::vector<id_t> reconstruct_path(id_t start_id, id_t goal_id,
-		std::map<id_t, id_t>& came_from) const
-	{
-		std::vector<id_t> c;
-		
-		for(id_t v = goal_id; v != start_id; v = came_from[v])
-		{
-			c.push_back(v);
-		}
-
-		c.push_back(start_id);
-		std::reverse(c.begin(), c.end());
-		
-		return c;
-	}
+	Graph();
+	Graph(const char*);
+	void add_vertex(id_t, Location);
+	void add_edge(id_t, id_t, cost_t, bool);
+	std::size_t vertex_count() const noexcept;
+	std::size_t edge_count() const noexcept;
+	id_t from_location(Location) const;
+	Location location(id_t) const;
+	friend std::ostream& operator<<(std::ostream&, const Location&);
+	friend std::ostream& operator<< (std::ostream&, const Graph&);
+	void output_binary(std::ofstream& out);
+	bool dijkstra(id_t, id_t, std::map<id_t, id_t>&) const;
+	bool astar(id_t, id_t, std::map<id_t, id_t>&) const;
+	std::vector<id_t> reconstruct_path(id_t, id_t, std::map<id_t, id_t>&) const;
 };
 
 #endif //GRAPH_HPP
