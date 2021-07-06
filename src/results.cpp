@@ -24,7 +24,6 @@ static Graph::Location coordinates[ROWS][COLUMNS] =
 int main(int argc, char **argv)
 {
 	Graph graph("data/england.dat");
-    graph.factor = 14.0;
     std::map<Graph::id_t, Graph::id_t> came_from;
     std::chrono::time_point<std::chrono::high_resolution_clock> start, stop;
     std::chrono::duration<double> duration;
@@ -32,8 +31,8 @@ int main(int argc, char **argv)
 
     for(int i = 0; i < ROWS; ++i)
     {
-        const Graph::Vertex v1 = graph.from_location(coordinates[i][0]);
-        const Graph::Vertex v2 = graph.from_location(coordinates[i][1]);
+        const Graph::id_t v1 = graph.from_location(coordinates[i][0]);
+        const Graph::id_t v2 = graph.from_location(coordinates[i][1]);
         
         for(int t = 0; t < TRIALS; ++t)
         {

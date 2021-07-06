@@ -22,8 +22,6 @@ public:
 		double lon;
 	};
 
-	double factor = 0.5;
-
 private:
 	struct Vertex
 	{

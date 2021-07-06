@@ -29,7 +29,7 @@ inline Graph::cost_t Graph::heuristic(const Graph::Vertex& v1, const Graph::Vert
 	const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
 		std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
 
-	return 2.0 * EARTH_RADIUS_KM * computation * factor;
+	return 2.0 * EARTH_RADIUS_KM * computation * 9.0;
 }
 
 Graph::Graph()
