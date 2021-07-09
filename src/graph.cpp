@@ -1,9 +1,11 @@
+#include <limits>
+#include <cmath>
 #include "graph.hpp"
 
 constexpr double Graph::EARTH_RADIUS_KM;
 
 inline bool Graph::greater_pqelement::operator() (
-	const Graph::PQElement& x, const Graph::PQElement& y) const 
+	const Graph::PQElement &x, const Graph::PQElement &y) const 
 {
 	return x.first > y.first; 
 }
@@ -13,10 +15,10 @@ inline double Graph::degree_to_radian(double angle) const
 	return M_PI * angle / 180.0;
 }
 
-inline Graph::cost_t Graph::heuristic(const Graph::Vertex& v1, const Graph::Vertex& v2) const 
+inline Graph::cost_t Graph::heuristic(const Graph::Vertex &v1, const Graph::Vertex &v2) const 
 {
-	const Location& l1 = v1.loc;
-	const Location& l2 = v2.loc;
+	const Location &l1 = v1.loc;
+	const Location &l2 = v2.loc;
 
 	const double lat_rad1 = degree_to_radian(l1.lat);
 	const double lat_rad2 = degree_to_radian(l2.lat);
@@ -134,18 +136,18 @@ Graph::Location Graph::location(Graph::id_t vertex_id) const
 	return vertices.at(vertex_id).loc;
 }
 
-std::ostream& operator<<(std::ostream& out, const Graph::Location& l)
+std::ostream& operator<<(std::ostream &out, const Graph::Location &l)
 {
 	out << l.lat << ", " << l.lon;
 	return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const Graph& data)
+std::ostream& operator<<(std::ostream &out, const Graph &data)
 {
 	for(auto it = data.vertices.cbegin(); it != data.vertices.cend(); ++it)
 	{
 		out << it->first << ": " << it->second.loc << std::endl << "{";
-		for(const Graph::Edge& e : it->second.edges)
+		for(const Graph::Edge &e : it->second.edges)
 		{
 			out << "(" << e.destination->id << ", " << e.cost << "), ";
 		}
@@ -155,14 +157,14 @@ std::ostream& operator<<(std::ostream& out, const Graph& data)
 	return out;
 }
 
-void Graph::output_binary(std::ofstream& out)
+void Graph::output_binary(std::ofstream &out)
 {
 	out.write(reinterpret_cast<const char*>(&n_vertices), sizeof(n_vertices));
 	std::map<id_t, Connection> connections;
 
 	for(auto it = vertices.cbegin(); it != vertices.cend(); ++it)
 	{
-		const Vertex& vertex = it->second;
+		const Vertex &vertex = it->second;
 		const std::size_t n_connections = vertex.edges.size();
 
 		out.write(reinterpret_cast<const char*>(&vertex.id), sizeof(vertex.id));
@@ -170,7 +172,7 @@ void Graph::output_binary(std::ofstream& out)
 
 		out.write(reinterpret_cast<const char*>(&n_connections), sizeof(n_connections));
 
-		for(const Edge& e : vertex.edges)
+		for(const Edge &e : vertex.edges)
 		{
 			Connection conn = {e.destination->id, e.cost};
 			out.write(reinterpret_cast<const char*>(&conn), sizeof(conn));
@@ -179,7 +181,7 @@ void Graph::output_binary(std::ofstream& out)
 }
 
 bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t>& came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -200,7 +202,7 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 			return true;
 		}
 
-		for(const Edge& edge : current->edges)
+		for(const Edge &edge : current->edges)
 		{
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
@@ -219,7 +221,7 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 }
 
 bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t>& came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -240,7 +242,7 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 			return true;
 		}
 
-		for(const Edge& edge : current->edges)
+		for(const Edge &edge : current->edges)
 		{
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
@@ -260,7 +262,7 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 }
 
 std::vector<Graph::id_t> Graph::reconstruct_path(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t>& came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from) const
 {
 	std::vector<id_t> c;
 	

@@ -23,7 +23,7 @@ static Graph::Location coordinates[ROWS][COLUMNS] =
 
 int main(int argc, char **argv)
 {
-	Graph graph("data/england.dat");
+    Graph graph("data/england.dat");
     std::map<Graph::id_t, Graph::id_t> came_from;
     std::chrono::time_point<std::chrono::high_resolution_clock> start, stop;
     std::chrono::duration<double> duration;
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
             if(!found)
                 not_found(i, t, 0);
             else
-                std::cout << duration.count() << "s\t";
+                std::cout << duration.count() << '\t';
         }
         std::cout << '\n';
 
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
             if(!found)
                 not_found(i, t, 1);
             else
-                std::cout << duration.count() << "s\t";
+                std::cout << duration.count() << '\t';
         }
         std::cout << "\n\n";
     }
@@ -68,6 +68,6 @@ int main(int argc, char **argv)
 
 inline void not_found(int row, int trial, int mode)
 {
-    std::cerr << "Error row " << row << " trial " << trial << " mode " << mode << std::endl;
+    std::cerr << "Error row " << row << " trial " << trial << " mode " << mode << '\n';
     std::exit(EXIT_FAILURE);
 }

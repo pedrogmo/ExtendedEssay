@@ -40,10 +40,10 @@ public:
         function(Function::CountNodes)
     {}
 
-    void way(const osmium::Way& way) 
+    void way(const osmium::Way &way) 
     {
-        const osmium::TagList& tags = way.tags();
-        const osmium::WayNodeList& nodelist = way.nodes();
+        const osmium::TagList &tags = way.tags();
+        const osmium::WayNodeList &nodelist = way.nodes();
 
         if(tags.has_key("highway") && 
             !tags.has_tag("highway", "path") && 
@@ -51,7 +51,7 @@ public:
         {
             if(function == Function::CountNodes)
             {
-                for(const osmium::NodeRef& node : nodelist)
+                for(const osmium::NodeRef &node : nodelist)
                 {
                     const osmium::object_id_type ref = node.ref();
                     link_counter[ref]++;
@@ -121,7 +121,7 @@ public:
                 for (osmium::WayNodeList::const_iterator it = nodelist.cbegin();
                     it != nodelist.cend(); ++it)
                 {
-                    const osmium::NodeRef& node = *it;
+                    const osmium::NodeRef &node = *it;
 
                     if (!first) //if first is null, check if node should be first
                     {
@@ -187,7 +187,7 @@ int main(int argc, char **argv)
         
         return EXIT_SUCCESS;
     } 
-    catch (const std::exception& e) 
+    catch (const std::exception &e) 
     {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
