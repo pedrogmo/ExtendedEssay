@@ -73,9 +73,9 @@ public:
 	Location location(id_t) const;
 	friend std::ostream& operator<<(std::ostream&, const Location&);
 	friend std::ostream& operator<< (std::ostream&, const Graph&);
-	void output_binary(std::ofstream& out);
-	bool dijkstra(id_t, id_t, std::map<id_t, id_t>&) const;
-	bool astar(id_t, id_t, std::map<id_t, id_t>&) const;
+	void output_binary(const char*);
+	bool dijkstra(id_t, id_t, std::map<id_t, id_t>&, std::size_t&) const;
+	bool astar(id_t, id_t, std::map<id_t, id_t>&, std::size_t&) const;
 	std::vector<id_t> reconstruct_path(id_t, id_t, std::map<id_t, id_t>&) const;
 };
 

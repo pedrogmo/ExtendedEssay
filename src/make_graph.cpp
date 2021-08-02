@@ -25,7 +25,7 @@ public:
 private:
     index_pos_type index_pos;
     index_neg_type index_neg;
-    std::ofstream file_out;
+    const char *file_out;
     Graph graph;
     std::map<osmium::object_id_type, std::uint32_t> link_counter;
 
@@ -35,7 +35,7 @@ public:
     Handler(const char* file) : 
         index_pos(), index_neg(),
         location_handler_type(index_pos, index_neg), 
-    	file_out(file, std::ios::binary), graph(), 
+    	file_out(file), graph(), 
         link_counter(),
         function(Function::CountNodes)
     {}

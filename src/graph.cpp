@@ -38,9 +38,9 @@ Graph::Graph()
 : vertices()
 {}
 
-Graph::Graph(const char* file)
+Graph::Graph(const char *filename)
 {
-	std::ifstream in(file, std::ios::binary);
+	std::ifstream in(filename, std::ios::binary);
 
 	in.read(reinterpret_cast<char*>(&n_vertices), sizeof(n_vertices));
 
@@ -157,8 +157,9 @@ std::ostream& operator<<(std::ostream &out, const Graph &data)
 	return out;
 }
 
-void Graph::output_binary(std::ofstream &out)
+void Graph::output_binary(const char *filename)
 {
+	std::ofstream out(filename, std::ios::binary);
 	out.write(reinterpret_cast<const char*>(&n_vertices), sizeof(n_vertices));
 	std::map<id_t, Connection> connections;
 
@@ -181,21 +182,22 @@ void Graph::output_binary(std::ofstream &out)
 }
 
 bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from,
+	std::size_t &count) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
 
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
-
 	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
+	count = 0u;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
-
 		frontier.pop();
+		count++;
 
 		if (current->id == goal_id) 
 		{
@@ -221,21 +223,23 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 }
 
 bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from,
+	std::size_t &count) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
 	const Vertex &goal = vertices.at(goal_id);
 
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
-
 	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
+	count = 0u;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+		count++;
 
 		if (current->id == goal_id) 
 		{

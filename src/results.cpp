@@ -1,9 +1,9 @@
 #include <chrono>
+#include <cstring>
 #include "graph.hpp"
 
 #define ROWS 10
 #define COLUMNS 2
-#define TRIALS 5
 
 static void not_found(int, int, int);
 
@@ -23,8 +23,24 @@ static Graph::Location coordinates[ROWS][COLUMNS] =
 
 int main(int argc, char **argv)
 {
+    if (argc != 2)
+    {
+        std::cerr << "Argument expected: number of trials.";
+        return EXIT_FAILURE;
+    }
+
+    int trials = std::atoi(argv[1]);
+
+    if (trials <= 0)
+    {
+        std::cerr << "Enter a positive number of trials.";
+        return EXIT_FAILURE;
+    }
+
     Graph graph("data/england.dat");
     std::map<Graph::id_t, Graph::id_t> came_from;
+    std::size_t count = 0u;
+
     std::chrono::time_point<std::chrono::high_resolution_clock> start, stop;
     std::chrono::duration<double> duration;
     bool found = true;
@@ -34,10 +50,10 @@ int main(int argc, char **argv)
         const Graph::id_t v1 = graph.from_location(coordinates[i][0]);
         const Graph::id_t v2 = graph.from_location(coordinates[i][1]);
         
-        for(int t = 0; t < TRIALS; ++t)
+        for(int t = 0; t < trials; ++t)
         {
             start = std::chrono::high_resolution_clock::now();
-            found = graph.dijkstra(v1, v2, came_from);
+            found = graph.dijkstra(v1, v2, came_from, count);
             stop = std::chrono::high_resolution_clock::now();
             duration = stop - start;
 
@@ -46,12 +62,12 @@ int main(int argc, char **argv)
             else
                 std::cout << duration.count() << '\t';
         }
-        std::cout << '\n';
+        std::cout << "Dijkstra nodes: " << count << '\n';
 
-        for(int t = 0; t < TRIALS; ++t)
+        for(int t = 0; t < trials; ++t)
         {
             start = std::chrono::high_resolution_clock::now();
-            found = graph.astar(v1, v2, came_from);
+            found = graph.astar(v1, v2, came_from, count);
             stop = std::chrono::high_resolution_clock::now();
             duration = stop - start;
 
@@ -60,8 +76,9 @@ int main(int argc, char **argv)
             else
                 std::cout << duration.count() << '\t';
         }
-        std::cout << "\n\n";
+        std::cout << "Astar nodes: " << count << "\n\n";
     }
+    
 
 	return EXIT_SUCCESS;
 }
