@@ -39,7 +39,6 @@ int main(int argc, char **argv)
 
     Graph graph("data/england.dat");
     std::map<Graph::id_t, Graph::id_t> came_from;
-    std::size_t count = 0u;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> start, stop;
     std::chrono::duration<double> duration;
@@ -53,7 +52,7 @@ int main(int argc, char **argv)
         for(int t = 0; t < trials; ++t)
         {
             start = std::chrono::high_resolution_clock::now();
-            found = graph.dijkstra(v1, v2, came_from, count);
+            found = graph.dijkstra(v1, v2, came_from);
             stop = std::chrono::high_resolution_clock::now();
             duration = stop - start;
 
@@ -62,12 +61,11 @@ int main(int argc, char **argv)
             else
                 std::cout << duration.count() << '\t';
         }
-        std::cout << "Dijkstra nodes: " << count << '\n';
 
         for(int t = 0; t < trials; ++t)
         {
             start = std::chrono::high_resolution_clock::now();
-            found = graph.astar(v1, v2, came_from, count);
+            found = graph.astar(v1, v2, came_from);
             stop = std::chrono::high_resolution_clock::now();
             duration = stop - start;
 
@@ -76,7 +74,6 @@ int main(int argc, char **argv)
             else
                 std::cout << duration.count() << '\t';
         }
-        std::cout << "Astar nodes: " << count << "\n\n";
     }
     
 

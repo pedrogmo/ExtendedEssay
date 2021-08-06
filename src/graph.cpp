@@ -31,7 +31,7 @@ inline Graph::cost_t Graph::heuristic(const Graph::Vertex &v1, const Graph::Vert
 	const double computation = std::asin(std::sqrt(std::sin(diff_lat / 2) * std::sin(diff_lat / 2) + 
 		std::cos(lat_rad1) * std::cos(lat_rad2) * std::sin(diff_lon / 2) * std::sin(diff_lon / 2)));
 
-	return 2.0 * EARTH_RADIUS_KM * computation / 50.0;
+	return 2.0 * EARTH_RADIUS_KM * computation / 35.0;
 }
 
 Graph::Graph()
@@ -182,8 +182,7 @@ void Graph::output_binary(const char *filename)
 }
 
 bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from,
-	std::size_t &count) const
+	std::map<Graph::id_t, Graph::id_t> &came_from) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -191,13 +190,11 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
 	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
-	count = 0u;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
-		count++;
 
 		if (current->id == goal_id) 
 		{
@@ -223,8 +220,7 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 }
 
 bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from,
-	std::size_t &count) const
+	std::map<Graph::id_t, Graph::id_t> &came_from) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -233,13 +229,11 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
 	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
-	count = 0u;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
-		count++;
 
 		if (current->id == goal_id) 
 		{

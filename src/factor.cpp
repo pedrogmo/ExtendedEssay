@@ -15,14 +15,13 @@ int main(int argc, char **argv)
     Graph::id_t v2 = graph.from_location({std::atof(argv[4]), std::atof(argv[5])});
     std::map<Graph::id_t, Graph::id_t> came_from;
 
-    std::size_t count = 0u;
     std::chrono::time_point<std::chrono::high_resolution_clock> start = std::chrono::high_resolution_clock::now();
-    bool found = graph.dijkstra(v1, v2, came_from, count);
+    bool found = graph.dijkstra(v1, v2, came_from);
     std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> duration = stop - start;
     double time_dijkstra = duration.count();
-    std::cout << "Dijsktra took " << time_dijkstra << "s and " << count << " nodes." << std::endl << std::endl;
+    std::cout << "Dijsktra took " << time_dijkstra << "s." << std::endl << std::endl;
 
 	if (!found)
     {
@@ -41,7 +40,7 @@ int main(int argc, char **argv)
     	graph.factor -= 0.5;
 
 		start = std::chrono::high_resolution_clock::now();
-	    found = graph.astar(v1, v2, came_from, count);
+	    found = graph.astar(v1, v2, came_from);
 	    stop = std::chrono::high_resolution_clock::now();
 
 	    duration = stop - start;
@@ -58,7 +57,7 @@ int main(int argc, char **argv)
 	    paths_equal = std::equal(path_astar.begin(), path_astar.end(), 
 	    	path_dijkstra.begin(), path_dijkstra.end());
 
-	    std::cout << "Factor " << graph.factor << " took " << duration.count() << "s and " << count << " nodes." << std::endl;
+	    std::cout << "Factor " << graph.factor << " took " << "s." << std::endl;
 	    
 	}
 	while(!paths_equal && graph.factor > 0.0);
