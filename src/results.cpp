@@ -1,13 +1,12 @@
-#include <chrono>
 #include <cstring>
 #include "graph.hpp"
 
 #define ROWS 10
 #define COLUMNS 2
 
-static void not_found(int, int, int);
+static void not_found(int, int);
 
-static Graph::Location coordinates[ROWS][COLUMNS] =
+static const Graph::Location coordinates[ROWS][COLUMNS] =
 {
     { {52.82129221319522, 1.3866942261891224},{52.771676763963804, 1.515929070363573} },
     { {52.68093254057173, 0.9399893330374438},{52.5767673437174, 1.7275985447676063} },
@@ -23,65 +22,38 @@ static Graph::Location coordinates[ROWS][COLUMNS] =
 
 int main(int argc, char **argv)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Argument expected: number of trials.";
-        return EXIT_FAILURE;
-    }
-
-    int trials = std::atoi(argv[1]);
-
-    if (trials <= 0)
-    {
-        std::cerr << "Enter a positive number of trials.";
-        return EXIT_FAILURE;
-    }
-
     Graph graph("data/england.dat");
     std::map<Graph::id_t, Graph::id_t> came_from;
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> start, stop;
-    std::chrono::duration<double> duration;
     bool found = true;
 
     for(int i = 0; i < ROWS; ++i)
     {
         const Graph::id_t v1 = graph.from_location(coordinates[i][0]);
         const Graph::id_t v2 = graph.from_location(coordinates[i][1]);
+
+        size_t dijkstra_nodes_visited = 0u;
+        size_t astar_nodes_visited = 0u;
         
-        for(int t = 0; t < trials; ++t)
-        {
-            start = std::chrono::high_resolution_clock::now();
-            found = graph.dijkstra(v1, v2, came_from);
-            stop = std::chrono::high_resolution_clock::now();
-            duration = stop - start;
+        found = graph.dijkstra(v1, v2, came_from, dijkstra_nodes_visited);
 
-            if(!found)
-                not_found(i, t, 0);
-            else
-                std::cout << duration.count() << '\t';
-        }
+        if (!found)
+            not_found(i, 0);
+        else
+            std::cout << dijkstra_nodes_visited << '\t';
+    
+        found = graph.astar(v1, v2, came_from, astar_nodes_visited);
 
-        for(int t = 0; t < trials; ++t)
-        {
-            start = std::chrono::high_resolution_clock::now();
-            found = graph.astar(v1, v2, came_from);
-            stop = std::chrono::high_resolution_clock::now();
-            duration = stop - start;
-
-            if(!found)
-                not_found(i, t, 1);
-            else
-                std::cout << duration.count() << '\t';
-        }
+        if (!found)
+            not_found(i, 1);
+        else
+            std::cout << astar_nodes_visited << '\t' << std::endl;
     }
     
-
 	return EXIT_SUCCESS;
 }
 
-inline void not_found(int row, int trial, int mode)
+inline void not_found(int row, int mode)
 {
-    std::cerr << "Error row " << row << " trial " << trial << " mode " << mode << '\n';
+    std::cerr << "Error row " << row << " mode " << mode << '\n';
     std::exit(EXIT_FAILURE);
 }

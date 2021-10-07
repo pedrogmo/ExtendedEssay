@@ -182,7 +182,7 @@ void Graph::output_binary(const char *filename)
 }
 
 bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from, size_t &nodes_visited) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -195,6 +195,8 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+
+		++nodes_visited;
 
 		if (current->id == goal_id) 
 		{
@@ -220,7 +222,7 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 }
 
 bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
-	std::map<Graph::id_t, Graph::id_t> &came_from) const
+	std::map<Graph::id_t, Graph::id_t> &came_from, size_t &nodes_visited) const
 {
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
@@ -234,6 +236,8 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+
+		++nodes_visited;
 
 		if (current->id == goal_id) 
 		{
