@@ -1,4 +1,3 @@
-#include <chrono>
 #include "graph.hpp"
 
 int main(int argc, char **argv)
@@ -38,14 +37,12 @@ int main(int argc, char **argv)
     }
 
     bool found = false;
-    std::chrono::time_point<std::chrono::high_resolution_clock> start = std::chrono::high_resolution_clock::now();
+    size_t nodes_visited = 0u;
 
     if (dijkstra_or_astar)
-        found = graph.dijkstra(v1, v2, came_from);
+        found = graph.dijkstra(v1, v2, came_from, nodes_visited);
     else
-        found = graph.astar(v1, v2, came_from);
-
-    std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
+        found = graph.astar(v1, v2, came_from, nodes_visited);
 
     if (!found)
     {
@@ -54,8 +51,7 @@ int main(int argc, char **argv)
     }
 
     //found
-    std::chrono::duration<double> duration = stop - start;
-    std::cout << duration.count() << "s" << std::endl;
+    std::cout << nodes_visited << std::endl;
 
     if (argc == 8) //extra argument: output kml
     {
