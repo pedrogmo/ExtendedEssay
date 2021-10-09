@@ -7,7 +7,7 @@
 
 static void not_found(int, int, int);
 
-static Graph::Location coordinates[ROWS][COLUMNS] =
+static const Graph::Location coordinates[ROWS][COLUMNS] =
 {
     { {52.82129221319522, 1.3866942261891224},{52.771676763963804, 1.515929070363573} },
     { {52.68093254057173, 0.9399893330374438},{52.5767673437174, 1.7275985447676063} },
