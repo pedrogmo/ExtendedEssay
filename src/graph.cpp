@@ -206,8 +206,9 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
 			//if cost does not exist or new_cost is smaller, update cost
-			if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
-				new_cost < cost_so_far[edge.destination->id]) 
+			std::map<id_t, cost_t>::iterator it = cost_so_far.find(edge.destination->id);
+			if (it == cost_so_far.end() ||
+				new_cost < it->second) 
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				came_from[edge.destination->id] = current->id;
@@ -245,8 +246,9 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 
 			//if cost does not exist or new_cost is smaller, update cost
-			if (cost_so_far.find(edge.destination->id) == cost_so_far.end() ||
-				new_cost < cost_so_far[edge.destination->id]) 
+			std::map<id_t, cost_t>::iterator it = cost_so_far.find(edge.destination->id);
+			if (it == cost_so_far.end() ||
+				new_cost < it->second) 
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				const cost_t priority = new_cost + heuristic(*edge.destination, goal);
