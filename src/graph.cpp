@@ -1,5 +1,6 @@
 #include <limits>
 #include <cmath>
+#include <set>
 #include "graph.hpp"
 
 constexpr double Graph::EARTH_RADIUS_KM;
@@ -184,17 +185,18 @@ void Graph::output_binary(const char *filename)
 bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 	std::map<Graph::id_t, Graph::id_t> &came_from, size_t &nodes_visited) const
 {
+	std::set<id_t> visited;
 	std::map<id_t, cost_t> cost_so_far;
 	PriorityQueue frontier;
 
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
-	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+		visited.insert(current->id);
 
 		++nodes_visited;
 
@@ -206,11 +208,11 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 		for(const Edge &edge : current->edges)
 		{
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
+			const std::map<id_t, cost_t>::const_iterator it = cost_so_far.find(edge.destination->id);
 
 			//if cost does not exist or new_cost is smaller, update cost
-			std::map<id_t, cost_t>::iterator it = cost_so_far.find(edge.destination->id);
-			if (it == cost_so_far.end() ||
-				new_cost < it->second) 
+			if (visited.find(edge.destination->id) == visited.end() &&
+				(it == cost_so_far.end() || new_cost < it->second))
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				came_from[edge.destination->id] = current->id;
@@ -226,17 +228,18 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 	std::map<Graph::id_t, Graph::id_t> &came_from, size_t &nodes_visited) const
 {
 	std::map<id_t, cost_t> cost_so_far;
+	std::set<id_t> visited;
 	PriorityQueue frontier;
 	const Vertex &goal = vertices.at(goal_id);
 
 	frontier.push(PQElement(0.0, &vertices.at(start_id)));
-	//came_from[start_id] = start_id;
 	cost_so_far[start_id] = 0.0;
 
 	while (!frontier.empty()) 
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+		visited.insert(current->id);
 
 		++nodes_visited;
 
@@ -248,11 +251,12 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 		for(const Edge &edge : current->edges)
 		{
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
+			const std::map<id_t, cost_t>::const_iterator it = cost_so_far.find(edge.destination->id);
 
 			//if cost does not exist or new_cost is smaller, update cost
-			std::map<id_t, cost_t>::iterator it = cost_so_far.find(edge.destination->id);
-			if (it == cost_so_far.end() ||
-				new_cost < it->second) 
+			
+			if (visited.find(edge.destination->id) == visited.end() &&
+				(it == cost_so_far.end() || new_cost < it->second))
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				const cost_t priority = new_cost + heuristic(*edge.destination, goal);
