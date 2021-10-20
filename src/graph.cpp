@@ -196,6 +196,13 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+
+		if (visited.find(current->id) != visited.end())
+		{
+			//If node has been already visited, skip it
+			continue;
+		}
+
 		visited.insert(current->id);
 
 		++nodes_visited;
@@ -211,8 +218,7 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 			const std::map<id_t, cost_t>::const_iterator it = cost_so_far.find(edge.destination->id);
 
 			//if cost does not exist or new_cost is smaller, update cost
-			if (visited.find(edge.destination->id) == visited.end() &&
-				(it == cost_so_far.end() || new_cost < it->second))
+			if (it == cost_so_far.end() || new_cost < it->second)
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				came_from[edge.destination->id] = current->id;
@@ -239,6 +245,13 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 	{
 		const Vertex *current = frontier.top().second;
 		frontier.pop();
+
+		if (visited.find(current->id) != visited.end())
+		{
+			//If node has been already visited, skip it
+			continue;
+		}
+
 		visited.insert(current->id);
 
 		++nodes_visited;
@@ -255,8 +268,7 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 
 			//if cost does not exist or new_cost is smaller, update cost
 			
-			if (visited.find(edge.destination->id) == visited.end() &&
-				(it == cost_so_far.end() || new_cost < it->second))
+			if (it == cost_so_far.end() || new_cost < it->second)
 			{
 				cost_so_far[edge.destination->id] = new_cost;
 				const cost_t priority = new_cost + heuristic(*edge.destination, goal);
