@@ -96,7 +96,7 @@ void write_kml(const Graph& graph, const char *filename, std::vector<Graph::id_t
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" <<
     "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" <<
     "<Document>\n" <<
-      "<name>LineStyle.kml</name>\n" <<
+      "<name>" << filename << "</name>\n" <<
       "<open>1</open>\n" <<
       "<Style id=\"linestyleExample\">\n" <<
         "<LineStyle>\n" <<
