@@ -1,10 +1,13 @@
-#include <cstring>
+#include <cstdio>
+#include <vector>
+#include <cassert>
 #include "graph.hpp"
 
 #define ROWS 10
 #define COLUMNS 2
 
 static void not_found(int, int);
+static void write_kml(const Graph&, const char*, std::vector<Graph::id_t>&&, bool);
 
 static const Graph::Location coordinates[ROWS][COLUMNS] =
 {
@@ -25,6 +28,12 @@ int main(int argc, char **argv)
     Graph graph("data/england.dat");
     std::map<Graph::id_t, Graph::id_t> came_from;
     bool found = true;
+    bool generate_kml = false;
+
+    if (argc > 1)
+    {
+        generate_kml = true;
+    }
 
     for(int i = 0; i < ROWS; ++i)
     {
@@ -36,17 +45,39 @@ int main(int argc, char **argv)
         
         found = graph.dijkstra(v1, v2, came_from, dijkstra_nodes_visited);
 
-        if (!found)
-            not_found(i, 0);
+        if (found)
+        {
+            std::cout << dijkstra_nodes_visited << '\t';  
+        }
         else
-            std::cout << dijkstra_nodes_visited << '\t';
+        {
+            not_found(i, 0);
+        }
+            
+        if (generate_kml)
+        {
+            char filename[100];
+            std::snprintf(filename, sizeof(filename), "kml_files/dijkstra%i.kml", (i+1));
+            write_kml(graph, filename, graph.reconstruct_path(v1, v2, came_from), false);
+        }
     
         found = graph.astar(v1, v2, came_from, astar_nodes_visited);
 
-        if (!found)
-            not_found(i, 1);
+        if (found)
+        {
+            std::cout << astar_nodes_visited << std::endl;  
+        }
         else
-            std::cout << astar_nodes_visited << '\t' << std::endl;
+        {
+            not_found(i, 0);
+        }
+
+        if (generate_kml)
+        {
+            char filename[100];
+            std::snprintf(filename, sizeof(filename), "kml_files/astar%i.kml", (i+1));
+            write_kml(graph, filename, graph.reconstruct_path(v1, v2, came_from), true);
+        }
     }
     
 	return EXIT_SUCCESS;
@@ -56,4 +87,46 @@ inline void not_found(int row, int mode)
 {
     std::cerr << "Error row " << row << " mode " << mode << '\n';
     std::exit(EXIT_FAILURE);
+}
+
+void write_kml(const Graph& graph, const char *filename, std::vector<Graph::id_t>&& vlist, bool astar)
+{
+    std::ofstream kml_out(filename);
+    kml_out << 
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" <<
+    "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" <<
+    "<Document>\n" <<
+      "<name>LineStyle.kml</name>\n" <<
+      "<open>1</open>\n" <<
+      "<Style id=\"linestyleExample\">\n" <<
+        "<LineStyle>\n" <<
+          "<color>" << (astar ? "7fff0000" : "7f0000ff") << "</color>\n" <<
+          "<width>4</width>\n" <<
+          "<gx:labelVisibility>1</gx:labelVisibility>\n" <<
+        "</LineStyle>\n" <<
+      "</Style>\n" <<
+      "<Placemark>\n" <<
+        "<name>LineStyle Example</name>\n" <<
+        "<styleUrl>#linestyleExample</styleUrl>\n" <<
+        "<LineString>\n" <<
+          "<extrude>1</extrude>\n" <<
+          "<tessellate>1</tessellate>\n" <<
+          "<coordinates>\n";
+    
+    for(const Graph::id_t& v : vlist)
+    {
+        const Graph::Location l = graph.location(v);
+        kml_out << l.lon << "," << l.lat << ",0" << std::endl;
+    }
+    const Graph::Location l = graph.location(vlist.front());
+    kml_out << l.lon << "," << l.lat << ",0" << std::endl;
+
+    kml_out << 
+    "</coordinates>\n" <<
+    "</LineString>\n" <<
+      "</Placemark>\n" <<
+    "</Document>\n" <<
+    "</kml>";
+
+    kml_out.close();
 }
