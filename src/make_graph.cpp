@@ -5,14 +5,11 @@
 #include <osmium/handler.hpp>
 #include <osmium/handler/node_locations_for_ways.hpp>
 #include <osmium/index/map/all.hpp>
-
 #include <cstring>
-
 #include "graph.hpp"
 
 typedef osmium::index::map::Dummy<osmium::unsigned_object_id_type, osmium::Location> index_neg_type;
 typedef osmium::index::map::SparseMemMap<osmium::unsigned_object_id_type, osmium::Location> index_pos_type;
-
 typedef osmium::handler::NodeLocationsForWays<index_pos_type, index_neg_type> location_handler_type;
 
 class Handler : public location_handler_type
@@ -56,16 +53,14 @@ public:
                     const osmium::object_id_type ref = node.ref();
                     link_counter[ref]++;
 
-                    if (link_counter[ref] == 2u) //vertex of the graph
+                    if (link_counter[ref] == 2u)
                     {
-                        //then add location to graph
                         const osmium::Location loc = get_node_location(ref);
                         graph.add_vertex(ref, {loc.lat(), loc.lon()});
                     }
                 }
             }
 
-            //first location not added, first not 2u
             else //if(function == Function::CreateData)
             {
                 const bool oneway = tags.has_tag("oneway", "true");
@@ -73,8 +68,8 @@ public:
                 double total_length = 0.0;
                 
                 const char *speed_str = tags.get_value_by_key("maxspeed");
-                double speed = 30.0; //default speed in km/h
-                if (!speed_str) //not provided (majority)
+                double speed = 30.0; 
+                if (!speed_str) 
                 {
                     if (tags.has_tag("highway", "motorway"))
                         speed = 120.0;
@@ -115,7 +110,7 @@ public:
                     speed = 180.0;
                 else if (std::strncmp(speed_str, "walk", std::strlen(speed_str)) == 0)
                     speed = 5.0;
-                else //speed in km/h
+                else 
                     speed = std::atof(speed_str);
 
                 for (osmium::WayNodeList::const_iterator it = nodelist.cbegin();
@@ -123,18 +118,15 @@ public:
                 {
                     const osmium::NodeRef &node = *it;
 
-                    if (!first) //if first is null, check if node should be first
+                    if (!first) 
                     {
                         if (link_counter[node.ref()] > 1u)
                         {
-                            //then set first to be this node and begin edge
                             first = &node;
                             prev = first;
                         }
                         continue;
                     }
-
-                    //if first is not null, add distance from prev
 
                     const osmium::Location l1 = get_node_location(prev->ref());
                     const osmium::Location l2 = get_node_location(node.ref());
@@ -145,7 +137,6 @@ public:
 
                     if (link_counter[node.ref()] > 1u)
                     {
-                        //construct an edge
                         graph.add_edge(first->ref(), node.ref(), total_length / speed, oneway);
                         total_length = 0.0;
                         first = &node;

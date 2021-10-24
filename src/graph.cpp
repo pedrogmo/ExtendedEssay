@@ -67,7 +67,6 @@ Graph::Graph(const char *filename)
 		vertices.insert({vertex.id, vertex});
 	}
 
-	//now traverse connections to set pointers to vertices
 	for(auto it = connections.cbegin(); it != connections.cend(); ++it)
 	{
 		Edge e = {&vertices.at(it->second.id), it->second.cost};
@@ -95,7 +94,6 @@ void Graph::add_edge(Graph::id_t from_id, Graph::id_t to_id,
 
 	if (!one_directional)
 	{
-		//reverse: to_id -> from_id
 		Edge back = {&vertices.at(from_id), cost};
 		vertices.at(to_id).edges.push_back(back);
 		n_edges++;
@@ -199,7 +197,6 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 
 		if (visited.find(current->id) != visited.end())
 		{
-			//If node has been already visited, skip it
 			continue;
 		}
 
@@ -217,7 +214,6 @@ bool Graph::dijkstra(Graph::id_t start_id, Graph::id_t goal_id,
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 			const std::map<id_t, cost_t>::const_iterator it = cost_so_far.find(edge.destination->id);
 
-			//if cost does not exist or new_cost is smaller, update cost
 			if (it == cost_so_far.end() || new_cost < it->second)
 			{
 				cost_so_far[edge.destination->id] = new_cost;
@@ -248,7 +244,6 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 
 		if (visited.find(current->id) != visited.end())
 		{
-			//If node has been already visited, skip it
 			continue;
 		}
 
@@ -266,8 +261,6 @@ bool Graph::astar(Graph::id_t start_id, Graph::id_t goal_id,
 			const cost_t new_cost = cost_so_far[current->id] + edge.cost;
 			const std::map<id_t, cost_t>::const_iterator it = cost_so_far.find(edge.destination->id);
 
-			//if cost does not exist or new_cost is smaller, update cost
-			
 			if (it == cost_so_far.end() || new_cost < it->second)
 			{
 				cost_so_far[edge.destination->id] = new_cost;
